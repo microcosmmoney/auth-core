@@ -1,0 +1,21 @@
+{
+  "name": "@microcosmmoney/auth-core",
+  "version": "2.1.0",
+  "description": "Microcosm OAuth 2.0 authentication core library",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MicrocosmMoney/Microcosm"
+  }
+}
