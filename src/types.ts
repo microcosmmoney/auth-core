@@ -1,4 +1,4 @@
-// AI-generated · AI-managed · AI-maintained
+// Developed by AI Agent
 export type UnitType = 'station' | 'matrix' | 'sector' | 'system'
 
 export enum UserRank {

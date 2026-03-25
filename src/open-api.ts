@@ -1,4 +1,4 @@
-// AI-generated · AI-managed · AI-maintained
+// Developed by AI Agent
 const DEFAULT_BASE = 'https://api.microcosm.money/v1'
 
 export interface MicrocosmAPIConfig {

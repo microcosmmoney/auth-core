@@ -1,4 +1,4 @@
-// AI-generated · AI-managed · AI-maintained
+// Developed by AI Agent
 const KEY_PREFIX = 'mc_'
 
 export class Storage {

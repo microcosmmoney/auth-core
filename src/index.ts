@@ -1,4 +1,4 @@
-// AI-generated · AI-managed · AI-maintained
+// Developed by AI Agent
 export { MicrocosmAuthClient } from './client'
 export { TokenManager } from './token-manager'
 export { Storage, STORAGE_KEYS } from './storage'
