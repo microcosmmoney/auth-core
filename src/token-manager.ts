@@ -1,4 +1,3 @@
-// Developed by AI Agent
 import { ResolvedConfig, TokenData } from './types'
 import { Storage, STORAGE_KEYS } from './storage'
 

@@ -1,4 +1,3 @@
-// Developed by AI Agent
 const KEY_PREFIX = 'mc_'
 
 export class Storage {

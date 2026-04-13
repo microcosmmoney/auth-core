@@ -1,4 +1,3 @@
-// Developed by AI Agent
 const DEFAULT_BASE = 'https://api.microcosm.money/v1'
 
 export interface MicrocosmAPIConfig {
@@ -74,8 +73,11 @@ export class MicrocosmAPI {
       if (p.tx_type) qs += `&tx_type=${p.tx_type}`
       return request<ApiRes<any>>(this.base, `/mcc/history${qs}`, token)
     },
-    getHolders: () => request<ApiRes<any>>(this.base, '/reincarnation/holders'),
-    getMiningHistory: (days = 30) => request<ApiRes<any>>(this.base, `/reincarnation/mining-history?days=${days}`),
+    getCirculatingSupply: () => request<any>(this.base, '/mcc/circulating-supply'),
+    getTotalSupply: () => request<any>(this.base, '/mcc/total-supply'),
+    getTokenInfo: () => request<ApiRes<any>>(this.base, '/mcc/token-info'),
+    getPriceHistory: (period = '7d') => request<ApiRes<any>>(this.base, `/mcc/price/history?period=${period}`),
+
   }
 
   readonly mcd = {
@@ -101,22 +103,6 @@ export class MicrocosmAPI {
     getTokens: (address: string) => request<ApiRes<any>>(this.base, `/wallets/${address}/tokens`),
   }
 
-  readonly reincarnation = {
-    getPool: () => request<ApiRes<any>>(this.base, '/reincarnation/pool'),
-    getBuybackPrice: () => request<ApiRes<any>>(this.base, '/reincarnation/buyback-price'),
-    getQuote: (mccAmount: number) => postRequest<ApiRes<any>>(this.base, '/reincarnation/quote', { mcc_amount: mccAmount }),
-    getUserHistory: (token: string, params?: { page?: number; page_size?: number }) => {
-      const p = params || {}
-      return request<ApiRes<any>>(this.base, `/reincarnation/user-history?page=${p.page || 1}&page_size=${p.page_size || 20}`, token)
-    },
-    record: (token: string, data: { tx_signature: string; wallet_address: string; mcc_amount: number; usdc_amount: number; stablecoin?: string }) =>
-      postRequest<ApiRes<any>>(this.base, '/reincarnation/record', data, token),
-    getConfig: () => request<ApiRes<any>>(this.base, '/reincarnation/config'),
-    getCycleHistory: (params?: { page?: number; page_size?: number }) => {
-      const p = params || {}
-      return request<ApiRes<any>>(this.base, `/reincarnation/cycle-history?page=${p.page || 1}&page_size=${p.page_size || 20}`)
-    },
-  }
 
   readonly mining = {
     getRecords: (token: string, params?: { page?: number; page_size?: number }) => {
@@ -147,7 +133,20 @@ export class MicrocosmAPI {
 
   readonly users = {
     getProfile: (token: string) => request<ApiRes<any>>(this.base, '/users/me', token),
+    getDetailedProfile: (token: string) => request<ApiRes<any>>(this.base, '/users/me/profile', token),
     getLevel: (token: string) => request<ApiRes<any>>(this.base, '/users/me/level', token),
+    getPublicProfile: (uid: string) => request<ApiRes<any>>(this.base, `/users/${uid}`),
+    updateProfile: (token: string, data: { display_name?: string }) =>
+      mutateRequest<ApiRes<any>>(this.base, 'PATCH', '/users/me/profile', data, token),
+    uploadAvatar: async (token: string, file: Blob) => {
+      const form = new FormData()
+      form.append('file', file)
+      const headers: Record<string, string> = { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${this.base}/users/me/avatar`, { method: 'POST', headers, body: form })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || `API error ${res.status}`)
+      return data as ApiRes<any>
+    },
   }
 
   readonly dashboard = {
@@ -184,12 +183,34 @@ export class MicrocosmAPI {
       putRequest<ApiRes<any>>(this.base, `/territories/${id}`, data, token),
     updateName: (token: string, id: string, name: string, force = false) =>
       putRequest<ApiRes<any>>(this.base, `/territories/${id}/name${force ? '?force=true' : ''}`, { name }, token),
+    join: (token: string, id: string) =>
+      postRequest<ApiRes<any>>(this.base, `/territories/${id}/join`, {}, token),
+    leave: (token: string, id: string) =>
+      postRequest<ApiRes<any>>(this.base, `/territories/${id}/leave`, {}, token),
+    getQueue: (token: string) => request<ApiRes<any>>(this.base, '/territories/queue', token),
+    joinQueue: (token: string) => postRequest<ApiRes<any>>(this.base, '/territories/queue', {}, token),
+    leaveQueue: (token: string) => mutateRequest<ApiRes<any>>(this.base, 'DELETE', '/territories/queue', {}, token),
+    getManagerIncome: (token: string) => request<ApiRes<any>>(this.base, '/territories/manager/income', token),
+    getTeamCustody: (token: string) => request<ApiRes<any>>(this.base, '/territories/team/custody', token),
+    getDetailedStats: (id: string) => request<ApiRes<any>>(this.base, `/territories/${id}/detailed-stats`),
+    getNameStatus: (id: string) => request<ApiRes<any>>(this.base, `/territories/${id}/name-status`),
+    getDistributionPlan: (id: string) => request<ApiRes<any>>(this.base, `/territories/${id}/distribution-plan`),
+    updateDistributionPlan: (token: string, id: string, data: Record<string, any>) =>
+      putRequest<ApiRes<any>>(this.base, `/territories/${id}/distribution-plan`, data, token),
   }
 
   readonly territory = {
     getCollection: () => request<ApiRes<any>>(this.base, '/territory/collection'),
     getNft: (mint: string) => request<ApiRes<any>>(this.base, `/territory/nft/${mint}`),
     getUserNfts: (wallet: string) => request<ApiRes<any>>(this.base, `/territory/nfts/${wallet}`),
+    getUserStatus: (uid: string) => request<ApiRes<any>>(this.base, `/territory/user-status/${uid}`),
+    getUnitNft: (unitId: string) => request<ApiRes<any>>(this.base, `/territory/unit/${unitId}/nft`),
+    prepareMint: (token: string, data: Record<string, any>) =>
+      postRequest<ApiRes<any>>(this.base, '/territory/nft/mint', data, token),
+    prepareTransfer: (token: string, data: Record<string, any>) =>
+      postRequest<ApiRes<any>>(this.base, '/territory/nft/transfer/prepare', data, token),
+    prepareBurn: (token: string, data: Record<string, any>) =>
+      postRequest<ApiRes<any>>(this.base, '/territory/nft/burn/prepare', data, token),
   }
 
   readonly voting = {
@@ -223,20 +244,24 @@ export class MicrocosmAPI {
       const p = params || {}
       return request<ApiRes<any>>(this.base, `/auction-solana/history?page=${p.page || 1}&page_size=${p.page_size || 20}`)
     },
+    create: (token: string, data: { unit_name: string; unit_type: string; starting_price: number; duration_hours?: number }) =>
+      postRequest<ApiRes<any>>(this.base, '/auction-solana/create', data, token),
   }
 
-  readonly techTree = {
-    getConfig: () => request<ApiRes<any>>(this.base, '/tech-tree/config'),
-    getUser: (token: string) => request<ApiRes<any>>(this.base, '/tech-tree/user', token),
-    getBonus: (token: string) => request<ApiRes<any>>(this.base, '/tech-tree/bonus', token),
-    unlock: (token: string, nodeId: string) => postRequest<ApiRes<any>>(this.base, '/tech-tree/unlock', { node_id: nodeId }, token),
-    upgrade: (token: string, nodeId: string) => postRequest<ApiRes<any>>(this.base, '/tech-tree/upgrade', { node_id: nodeId }, token),
+  readonly techBonus = {
+    getConfig: () => request<ApiRes<any>>(this.base, '/tech-bonus/config'),
+    getUser: (token: string) => request<ApiRes<any>>(this.base, '/tech-bonus/user', token),
+    getBonus: (token: string) => request<ApiRes<any>>(this.base, '/tech-bonus/bonus', token),
+    unlock: (token: string, nodeId: string) => postRequest<ApiRes<any>>(this.base, '/tech-bonus/unlock', { node_id: nodeId }, token),
+    upgrade: (token: string, nodeId: string) => postRequest<ApiRes<any>>(this.base, '/tech-bonus/upgrade', { node_id: nodeId }, token),
   }
 
   readonly fragment = {
     getConfig: () => request<ApiRes<any>>(this.base, '/fragment/config'),
     getVaults: () => request<ApiRes<any>>(this.base, '/fragment/vaults'),
     getVault: (id: number) => request<ApiRes<any>>(this.base, `/fragment/vault/${id}`),
+    getVaultHolders: (id: number) => request<ApiRes<any>>(this.base, `/fragment/vault/${id}/holders`),
+    getHoldings: (wallet: string) => request<ApiRes<any>>(this.base, `/fragment/holdings/${wallet}`),
     buy: (token: string, data: { nft_mint: string; amount: number; max_price_per_fragment_usdc?: number }) =>
       postRequest<ApiRes<any>>(this.base, '/fragment/buy/prepare', data, token),
     fragmentize: (token: string, data: { nft_mint: string; fragment_count: number }) =>
@@ -257,6 +282,14 @@ export class MicrocosmAPI {
     getPool: () => request<ApiRes<any>>(this.base, '/lending/pool'),
     getStats: () => request<ApiRes<any>>(this.base, '/lending/stats'),
     getOracle: () => request<ApiRes<any>>(this.base, '/lending/oracle'),
+    getPosition: (wallet: string) => request<ApiRes<any>>(this.base, `/lending/position/${wallet}`),
+    getLoans: (wallet: string) => request<ApiRes<any>>(this.base, `/lending/loans/${wallet}`),
+    getLoan: (wallet: string, loanId: string) => request<ApiRes<any>>(this.base, `/lending/loan/${wallet}/${loanId}`),
+    getLpBalance: (wallet: string) => request<ApiRes<any>>(this.base, `/lending/lp-balance/${wallet}`),
+    calculateInterest: (data: { wallet: string; nft_mint: string }) =>
+      postRequest<ApiRes<any>>(this.base, '/lending/calculate-interest', data),
+    estimateBorrowCost: (data: { amount: number; duration_type: number }) =>
+      postRequest<ApiRes<any>>(this.base, '/lending/estimate-borrow-cost', data),
     deposit: (token: string, data: { wallet: string; amount: number }) =>
       postRequest<ApiRes<any>>(this.base, '/lending/deposit/prepare', data, token),
     withdraw: (token: string, data: { wallet: string; lp_amount: number }) =>
@@ -273,5 +306,80 @@ export class MicrocosmAPI {
 
   readonly organizations = {
     getList: (token: string) => request<ApiRes<any>>(this.base, '/organizations', token),
+    getTree: (token: string) => request<ApiRes<any>>(this.base, '/organizations/tree', token),
+    getSummary: (token: string) => request<ApiRes<any>>(this.base, '/organizations/summary', token),
+    getDetail: (token: string, id: string) => request<ApiRes<any>>(this.base, `/organizations/${id}`, token),
+    getMembers: (token: string, id: string, params?: { page?: number; page_size?: number }) => {
+      const p = params || {}
+      return request<ApiRes<any>>(this.base, `/organizations/${id}/members?page=${p.page || 1}&page_size=${p.page_size || 20}`, token)
+    },
+    getStats: (id: string) => request<ApiRes<any>>(this.base, `/organizations/${id}/stats`),
+  }
+
+  readonly notifications = {
+    list: (token: string, params?: { page?: number; page_size?: number; unread_only?: boolean }) => {
+      const p = params || {}
+      let qs = `?page=${p.page || 1}&page_size=${p.page_size || 20}`
+      if (p.unread_only) qs += '&unread_only=true'
+      return request<ApiRes<any>>(this.base, `/notifications${qs}`, token)
+    },
+    getUnreadCount: (token: string) => request<ApiRes<any>>(this.base, '/notifications/unread-count', token),
+    markRead: (token: string, ids?: string[]) =>
+      postRequest<ApiRes<any>>(this.base, '/notifications/read', ids ? { notification_ids: ids } : {}, token),
+    markSingleRead: (token: string, id: string) =>
+      postRequest<ApiRes<any>>(this.base, `/notifications/${id}/read`, {}, token),
+  }
+
+  readonly projects = {
+    apply: (token: string, data: { project_name: string; description: string; redirect_uris: string[]; domains: string[]; mcd_wallet?: string }) =>
+      postRequest<ApiRes<any>>(this.base.replace('/v1', ''), '/api/open/projects/apply', data, token),
+    getMyApplications: (token: string) =>
+      request<ApiRes<any>>(this.base.replace('/v1', ''), '/api/open/projects/applications/mine', token),
+  }
+
+  readonly hodl = {
+    getPool: () => request<ApiRes<any>>(this.base, '/hodl-challenge/pool'),
+    getLeaderboard: (params?: { sort?: string; page?: number; page_size?: number }) => {
+      const p = params || {}
+      let qs = `?page=${p.page || 1}&page_size=${p.page_size || 20}`
+      if (p.sort) qs += `&sort=${p.sort}`
+      return request<ApiRes<any>>(this.base, `/hodl-challenge/leaderboard${qs}`)
+    },
+    getMyPositions: (token: string) => request<ApiRes<any>>(this.base, '/hodl-challenge/my-positions', token),
+    getMyWallets: (token: string) => request<ApiRes<any>>(this.base, '/hodl-challenge/my-wallets', token),
+    requestEntry: (token: string, data: { deposit_mcc: number; entry_wallet: string }) =>
+      postRequest<ApiRes<any>>(this.base, '/hodl-challenge/request-entry', data, token),
+    confirmEntry: (token: string, data: { request_id: string; payment_tx: string }) =>
+      postRequest<ApiRes<any>>(this.base, '/hodl-challenge/confirm-entry', data, token),
+    exit: (token: string, data: { position_id: string; exit_wallet: string }) =>
+      postRequest<ApiRes<any>>(this.base, '/hodl-challenge/exit', data, token),
+    getRecentExits: (params?: { limit?: number }) => {
+      const p = params || {}
+      return request<ApiRes<any>>(this.base, `/hodl-challenge/recent-exits?limit=${p.limit || 20}`)
+    },
+    getTrend: (params?: { days?: number }) => {
+      const p = params || {}
+      return request<ApiRes<any>>(this.base, `/hodl-challenge/trend?days=${p.days || 30}`)
+    },
+    getPrices: () => request<ApiRes<any>>(this.base, '/hodl-challenge/prices'),
+  }
+
+  readonly crashChallenge = {
+    getStatus: () => request<ApiRes<any>>(this.base, '/crash-challenge/status'),
+    register: (token: string, data: { wallet_address: string }) =>
+      postRequest<ApiRes<any>>(this.base, '/crash-challenge/register', data, token),
+    getMyChallenges: (token: string) => request<ApiRes<any>>(this.base, '/crash-challenge/my-challenges', token),
+    getHistory: (params?: { page?: number; page_size?: number }) => {
+      const p = params || {}
+      return request<ApiRes<any>>(this.base, `/crash-challenge/history?page=${p.page || 1}&page_size=${p.page_size || 20}`)
+    },
+  }
+
+  readonly nft = {
+    getCollectionMetadata: () => request<any>(this.base, '/nft/metadata/collection.json'),
+    getTerritoryMetadata: (territoryId: string) => request<any>(this.base, `/nft/metadata/${territoryId}.json`),
+    getCollectionImage: () => `${this.base}/nft/image/collection`,
+    getDefaultImage: (typeName: string) => `${this.base}/nft/image/default/${typeName}`,
+    getTerritoryImage: (territoryId: string) => `${this.base}/nft/image/${territoryId}`,
   }
 }

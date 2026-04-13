@@ -1,4 +1,3 @@
-// Developed by AI Agent
 import {
   MicrocosmAuthConfig,
   ResolvedConfig,
@@ -204,6 +203,7 @@ export class MicrocosmAuthClient {
       title: (profile.title as User['title']) || null,
       stationId: profile.station_id || null,
       emailVerified: profile.email_verified,
+      totpEnabled: (profile as unknown as Record<string, unknown>).totp_enabled as boolean | undefined,
     }
   }
 

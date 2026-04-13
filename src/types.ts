@@ -1,9 +1,6 @@
-// Developed by AI Agent
 export type UnitType = 'station' | 'matrix' | 'sector' | 'system'
 
 export enum UserRank {
-  RECRUIT = 'Recruit',
-  PROSPECT = 'Prospect',
   MINER = 'Miner',
   COMMANDER = 'Commander',
   PIONEER = 'Pioneer',
@@ -41,10 +38,11 @@ export interface User {
   displayName?: string | null
   avatarUrl?: string | null
   role: 'admin' | 'user' | 'agent'
-  level?: 'recruit' | 'prospect' | 'miner'
+  level?: 'miner' | 'commander' | 'pioneer' | 'warden' | 'admiral'
   title?: 'commander' | 'pioneer' | 'warden' | 'admiral' | null
   stationId?: number | null
   emailVerified?: boolean
+  totpEnabled?: boolean
 }
 
 export interface TokenData {
@@ -121,8 +119,7 @@ export interface MCCPrice {
   market_cap?: number | null
   source: string
   updated_at: string
-  buyback_price?: number
-  premium_rate?: number
+
 }
 
 export interface Wallet {
@@ -159,8 +156,8 @@ export interface MiningRatio {
 
 export interface MiningDistribution {
   user_mcc: number
-  team_mcc: number
   magistrate_mcc: number
+  lp_mcc: number
   vault_mcd: number
   source: string
   territory_id?: string
@@ -168,28 +165,16 @@ export interface MiningDistribution {
   created_at: string
 }
 
-export interface BuybackQuote {
-  mcc_amount: number
-  market_price: number
-  buyback_price: number
-  usdc_amount: number
-  premium_amount: number
-  fee?: number
-  fee_rate?: number
-  slippage?: number
-  net_amount?: number
-  vault_type?: string
-  pool_remaining?: number
+export interface CompanionYieldBreakdown {
+  magistrate_total_pct: 40
+  magistrate_station_pct: 16
+  magistrate_matrix_pct: 12
+  magistrate_sector_pct: 8
+  magistrate_system_pct: 4
+  lp_reserve_pct: 30
+  vault_mcd_pct: 30
 }
 
-export interface BuybackRecord {
-  mcc_amount: number
-  usdc_amount: number
-  stablecoin: string
-  tx_signature?: string
-  buyback_price?: number
-  created_at: string
-}
 
 export interface Territory {
   unit_id: string
@@ -199,11 +184,16 @@ export interface Territory {
   description?: string
   location?: string
   image_url?: string
+  image_status?: string
   parent_id?: string
+  full_path?: string
   member_count?: number
   max_capacity?: number
   vault_balance?: number
   manager_uid?: string
+  manager_display_name?: string
+  manager_avatar_url?: string
+  manager_wallet?: string
 }
 
 export interface TerritorySummary {
@@ -330,24 +320,6 @@ export interface MiningConfig {
   max_amount: number
 }
 
-export interface BuybackRecordInput {
-  tx_signature: string
-  wallet_address: string
-  mcc_amount: number
-  usdc_amount: number
-  stablecoin?: string
-}
-
-export interface ReincarnationConfig {
-  program_id: string
-  pool_address: string
-  mcc_vault: string
-  usdc_vault: string
-  usdt_vault: string
-  min_buyback: number
-  max_buyback: number
-  premium_rate: number
-}
 
 export interface MCCHistoryRecord {
   mcc_amount: number
@@ -359,13 +331,6 @@ export interface MCCHistoryRecord {
   created_at: string
 }
 
-export interface CycleHistory {
-  cycle_id: number
-  executed_at: string
-  mcc_returned: number
-  mcd_returned: number
-  status: string
-}
 
 export interface AuctionHistory {
   auction_id: number
@@ -391,6 +356,9 @@ export interface MCCStats {
   price?: number
   market_cap?: number | null
   locked_amount?: number
+  current_phase?: number
+  current_mining_rate?: number
+  next_halving_at?: number
 }
 
 export interface MiningStats {
@@ -403,7 +371,7 @@ export interface MiningStats {
   last_mined_at: string | null
 }
 
-export interface TechTreeNode {
+export interface TechBonusNode {
   node_id: string
   name: string
   level: number
@@ -413,13 +381,13 @@ export interface TechTreeNode {
   bonus?: Record<string, number>
 }
 
-export interface TechTree {
-  nodes: TechTreeNode[]
+export interface TechBonus {
+  nodes: TechBonusNode[]
   total_unlocked: number
   total_nodes: number
 }
 
-export interface TechTreeBonus {
+export interface TechBonusDetail {
   bonus_multiplier: number
   active_bonuses?: Record<string, number>
 }
@@ -427,9 +395,11 @@ export interface TechTreeBonus {
 export interface UserStats {
   total_users: number
   by_level: {
-    recruit: number
-    prospect: number
     miner: number
+    commander: number
+    pioneer: number
+    warden: number
+    admiral: number
   }
 }
 
@@ -528,13 +498,12 @@ export interface TerritoryKPI {
 }
 
 export interface UserLevel {
-  level: string
-  title?: string | null
-  upgrade_progress?: {
-    current_days?: number
-    required_days?: number
-    percentage?: number
-  }
+  level: 'miner' | 'commander' | 'pioneer' | 'warden' | 'admiral'
+  title?: 'commander' | 'pioneer' | 'warden' | 'admiral' | null
+  station_count?: number
+  matrix_count?: number
+  sector_count?: number
+  system_count?: number
   mining_weight?: Record<string, number>
 }
 
@@ -545,6 +514,8 @@ export interface DashboardMarketSummary {
   liquidity_usd: number
   fdv: number
   market_cap: number
+  buys_24h?: number
+  sells_24h?: number
 }
 
 export interface DashboardUserSummary {
@@ -672,4 +643,104 @@ export interface LendingLiquidateInput {
   liquidator_wallet: string
   borrower_wallet: string
   nft_mint: string
+}
+
+export interface HodlPoolStats {
+  total_mcc: number
+  active_positions: number
+  unique_players: number
+  next_distribution_at?: string
+}
+
+export interface HodlPosition {
+  position_id: string
+  uid: string
+  deposit_mcc: number
+  current_mcc: number
+  entry_base_price: number
+  entry_wallet: string
+  vault_index: number
+  payment_tx?: string
+  entry_at: string
+  days_held: number
+  unrealized_pnl_usdc?: number
+}
+
+export interface HodlLeaderboardEntry {
+  uid: string
+  display_name?: string
+  avatar_url?: string
+  player_tag?: 'User' | 'Staff' | 'System'
+  total_holding_mcc: number
+  total_pnl_usdc: number
+  avg_daily_return_usdc: number
+  days_held: number
+}
+
+export interface HodlExitInfo {
+  position_id: string
+  exit_mcc_returned: number
+  exit_mcc_forfeited: number
+  exit_tx?: string
+  exited_at: string
+}
+
+export interface HodlEntryRequest {
+  deposit_mcc: number
+  entry_wallet: string
+}
+
+export interface HodlEntryConfirm {
+  request_id: string
+  payment_tx: string
+}
+
+export interface HodlExitRequest {
+  position_id: string
+  exit_wallet: string
+}
+
+export interface HodlTrendPoint {
+  date: string
+  pnl_usdc: number
+  bonus_pool_mcc: number
+}
+
+export interface CrashChallengeStatus {
+  min_mcc_balance: number
+  base_price_usdc: number
+  cooldown_hours: number
+  active: boolean
+}
+
+export interface CrashChallengeAttempt {
+  attempt_id: string
+  uid: string
+  wallet_address: string
+  status: 'active' | 'success' | 'expired' | 'cancelled'
+  entry_price: number
+  target_price: number
+  expires_at: string
+  created_at: string
+}
+
+export interface CrashRegisterRequest {
+  wallet_address: string
+}
+
+export interface AiChatQuota {
+  limit: number
+  used: number
+  remaining: number
+  reset_at: string
+  tier: 'L1' | 'L2' | 'L3' | 'admin'
+}
+
+export interface TechBonusStatus {
+  station_unlocked: boolean
+  matrix_unlocked: boolean
+  sector_unlocked: boolean
+  system_unlocked: boolean
+  total_bonus_pct: number
+  bonus_bps: number
 }

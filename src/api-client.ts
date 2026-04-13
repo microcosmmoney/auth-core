@@ -1,4 +1,3 @@
-// Developed by AI Agent
 import { TokenManager } from './token-manager'
 
 const OPEN_API_BASE = 'https://api.microcosm.money/v1'
