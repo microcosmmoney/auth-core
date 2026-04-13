@@ -203,6 +203,7 @@ export class MicrocosmAPI {
     getCollection: () => request<ApiRes<any>>(this.base, '/territory/collection'),
     getNft: (mint: string) => request<ApiRes<any>>(this.base, `/territory/nft/${mint}`),
     getUserNfts: (wallet: string) => request<ApiRes<any>>(this.base, `/territory/nfts/${wallet}`),
+    getHoldings: (wallet: string) => request<ApiRes<any>>(this.base, `/territory/holdings/${wallet}`),
     getUserStatus: (uid: string) => request<ApiRes<any>>(this.base, `/territory/user-status/${uid}`),
     getUnitNft: (unitId: string) => request<ApiRes<any>>(this.base, `/territory/unit/${unitId}/nft`),
     prepareMint: (token: string, data: Record<string, any>) =>

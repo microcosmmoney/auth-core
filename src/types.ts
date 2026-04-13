@@ -497,14 +497,38 @@ export interface TerritoryKPI {
   mining_activity: number
 }
 
-export interface UserLevel {
-  level: 'miner' | 'commander' | 'pioneer' | 'warden' | 'admiral'
-  title?: 'commander' | 'pioneer' | 'warden' | 'admiral' | null
-  station_count?: number
-  matrix_count?: number
-  sector_count?: number
-  system_count?: number
-  mining_weight?: Record<string, number>
+export interface TerritoryHoldings {
+  station: number
+  matrix: number
+  sector: number
+  system: number
+}
+
+export interface NextLevelRequirement {
+  tier: 'station' | 'matrix' | 'sector' | 'system'
+  have: number
+  need: number
+  description: string
+}
+
+export interface LevelProgress {
+  uid?: string
+  user_id?: string
+  wallet?: string | null
+  current_level: number
+  current_rank: 'Miner' | 'Commander' | 'Pioneer' | 'Warden' | 'Admiral'
+  next_level: number | null
+  next_rank: 'Miner' | 'Commander' | 'Pioneer' | 'Warden' | 'Admiral' | null
+  progress_percent: number
+  holdings: TerritoryHoldings
+  next_level_requirement: NextLevelRequirement | null
+}
+
+export interface UserLevel extends LevelProgress {
+  level?: string
+  database_level?: string
+  database_unit_level?: number
+  is_synced?: boolean
 }
 
 export interface DashboardMarketSummary {
