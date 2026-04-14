@@ -1,0 +1,22 @@
+{
+  "name": "@microcosmmoney/auth-core",
+  "version": "2.3.3",
+  "description": "Microcosm authentication core library (Native Session Token)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MicrocosmMoney/Microcosm"
+  }
+}
