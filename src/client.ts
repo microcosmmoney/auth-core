@@ -15,7 +15,7 @@ const DEFAULT_CONFIG: Omit<ResolvedConfig, 'clientId' | 'redirectUri'> = {
   authEndpoint: 'https://microcosm.money',
   tokenExchangeUri: '/api/auth/exchange',
   profileUri: '/api/users/profile',
-  storage: 'localStorage',
+  storage: 'sessionStorage',
   autoRefresh: true,
   refreshBuffer: 300,
   debug: false,
@@ -217,12 +217,12 @@ export class MicrocosmAuthClient {
   }
 
   private generateState(): string {
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      const array = new Uint8Array(32)
-      crypto.getRandomValues(array)
-      return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
+    if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+      throw new Error('[MicrocosmAuth] Secure crypto.getRandomValues unavailable; cannot generate OAuth state safely')
     }
-    return Math.random().toString(36).substring(2) + Date.now().toString(36)
+    const array = new Uint8Array(32)
+    crypto.getRandomValues(array)
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
   }
 
   private async safeJson(response: Response): Promise<Record<string, string>> {
